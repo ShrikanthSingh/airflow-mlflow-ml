@@ -1,6 +1,7 @@
 from airflow.models import DAG
 
 from airflow.operators.python import PythonOperator
+from airflow.operators.dummy import DummyOperator
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.utils.task_group import TaskGroup
 
@@ -28,7 +29,11 @@ with DAG(
     default_args=default_args, 
     catchup=False) as dag:
 
-    
+    # task_0
+    dummy_start = DummyOperator(
+        task_id='Start_Dag',
+    )
+
     # task: 1
     with TaskGroup('creating_storage_structures') as creating_storage_structures:
 
@@ -88,6 +93,16 @@ with DAG(
         fitting_best_model = PythonOperator(
             task_id='fitting_best_model',
             python_callable=fit_best_model
-        )    
+        )  
 
-    creating_storage_structures >> fetching_data >> preparing_data >> hyperparam_tuning >> after_crossvalidation
+    # task_0
+    dummy_end = DummyOperator(
+        task_id='End_Dag',
+    )
+
+    dummy_start >> \
+    creating_storage_structures >> \
+    fetching_data >> preparing_data >> \
+    hyperparam_tuning >> \
+    after_crossvalidation >> \
+    dummy_end
